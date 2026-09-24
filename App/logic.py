@@ -23,6 +23,11 @@
  *
  * Dario Correal
  """
+ # TODO Importar la librería para el manejo de mapas
+from DataStructures.Map import map_linear_probing as lp
+
+# TODO Realice la importación de ArrayList como estructura de datos auxiliar para sus requerimientos
+from DataStructures.List import array_list as al
 
 import os
 import csv
