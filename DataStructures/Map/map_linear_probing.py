@@ -1,90 +1,105 @@
 import random
 from DataStructures.Map import map_entry as me
 from DataStructures.Map import map_functions as mf
+from DataStructures.List import array_list as al
+
+def new_map(num_elementos,load_factor=0.5,prime=109345121):
+    capacity = mf.next_prime(int(num_elementos / load_factor))
+    scale = random.randint(1,prime-1)
+    shift = random.randint(0,prime-1)
+    elementos = al.new_list()
+    for i in range(0,capacity):
+        al.add_last(elementos,me.new_map_entry(None,None))
+    
+    mapa = {"capacity":capacity,
+            "prime" : prime,
+            "scale": scale,
+            "shift" : shift,
+            "table": elementos,
+            "current_factor": 0,
+            "size" : 0,
+            "limit_factor" : load_factor}
+    
+    return mapa
 
 
-def new_map(num_elements, load_factor=0.5, prime=109345121):
-    """
-    Crea una nueva tabla de símbolos (map) sin elementos utilizando linear probing.
-    """
-    prime_val = prime
-    capacity = mf.next_prime(int(num_elements / load_factor))
-    if capacity < 5:
-        capacity = 5
 
-    scale = random.randint(1, prime_val - 1)
-    shift = random.randint(0, prime_val - 1)
+def is_available(table,pos):
+    if me.get_key(table[pos]) == None:
+        return True
+    return False
 
-    # Inicializamos la tabla con entradas vacías (None)
-    table = [None] * capacity
-
-    my_map = {
-        "prime": prime_val,
-        "capacity": capacity,
-        "scale": scale,
-        "shift": shift,
-        "table": table,
-        "current_factor": 0.0,
-        "limit_factor": load_factor,
-        "size": 0,
-    }
-    return my_map
-
-
-def default_compare(key1, key2):
+    
+def default_compare(key1, entry):
     """
     Función de comparación por defecto entre dos llaves.
     """
-    if key1 == key2:
+    if key1 == me.get_key(entry):
         path = 0
-    elif key1 > key2:
+    elif key1 > me.get_key(entry):
         path = 1
     else:
         path = -1
     return path
 
+def find_slot(my_map,key,hash_value):
+    encontrado = False
+    pos = None
+    
+    while encontrado == False:
+        if me.get_key(my_map["table"]["elements"][hash_value]) == None:
+            pos = hash_value
+            break 
+        else:
+            if me.get_key(my_map["table"][hash_value]) == key:
+               pos = hash_value
+               encontrado = True
+        hash_value = (hash_value + 1) % my_map["capacity"]
+        
+    return (encontrado,pos)
 
-def is_available(table, index):
+def contains(my_map,key):
+    hash_value = mf.hash_value(my_map,key)
+    verdad,pos = find_slot(my_map,key,hash_value)
+    return verdad               
+    
+
+def get(my_map,key):
+    hash_value = mf.hash_value(my_map,key)
+    valor,pos = find_slot(my_map,key,hash_value)
+    if valor:
+       return me.get_value(my_map["table"]["elements"][pos])
+    return None 
+
+def remove(my_map,key):
+    """Funciona ya que, find_slot me busca es por break, contador modular 
+    entonces va a existir no importa cuantos asubk sumados base a N sean
     """
-    Verifica si una posición en la tabla está disponible (vacía o marcada como disponible/eliminada).
-    """
-    entry = table[index]
-    return entry is None or me.get_key(entry) is None
+    hash_values = mf.hash_value(my_map,key)
+    valor,pos = find_slot(my_map,key,hash_values)
+    if valor:
+        me.set_key(my_map["table"]["elements"][pos],None)
+        me.set_value(my_map["table"]["elements"][pos],None)
+        my_map["size"] -= 1
+        my_map["current_factor"] = my_map["size"] / my_map["capacity"]
+        return my_map
+    return None
 
-
-def find_slot(my_map, key):
-    """
-    Busca la ranura (slot) correspondiente a una llave utilizando linear probing.
-    Retorna una tupla (encontrado: bool, index: int).
-    """
-    table = my_map["table"]
-    capacity = my_map["capacity"]
-    start_index = mf.hash_value(my_map, key)
-    index = start_index
-
-    first_available = -1
-
-    while True:
-        entry = table[index]
-        if entry is None:
-            if first_available == -1:
-                first_available = index
-            return False, first_available
-        elif me.get_key(entry) is None:
-            if first_available == -1:
-                first_available = index
-        elif default_compare(me.get_key(entry), key) == 0:
-            return True, index
-
-        index = (index + 1) % capacity
-        if index == start_index:
-            break
-
-    if first_available != -1:
-        return False, first_available
-
-    return False, -1
-
+def put(my_map, key, value):
+    hash_value = mf.hash_value(my_map,key)
+    valor,pos = find_slot(my_map,key,hash_value)
+    if valor:
+       me.set_value(my_map["table"]["elements"][pos],value)
+    else:
+       me.set_value(my_map["table"]["elements"][pos],value)
+       me.set_key(my_map["table"]["elements"][pos],key)
+       my_map["size"] += 1
+       my_map["current_factor"] = my_map["size"] / my_map["capacity"]
+       if my_map["current_factor"]  > my_map["limit_factor"]:
+           rehash(my_map)
+           return my_map
+    return my_map
+    
 
 def rehash(my_map):
     """
@@ -106,62 +121,8 @@ def rehash(my_map):
     for entry in old_table:
         if entry is not None and me.get_key(entry) is not None:
             put(my_map, me.get_key(entry), me.get_value(entry))
-
-
-def put(my_map, key, value):
-    """
-    Inserta o actualiza una pareja llave-valor en la tabla.
-    """
-    found, index = find_slot(my_map, key)
-    table = my_map["table"]
-
-    if found:
-        # Actualiza el valor si la llave ya existe
-        me.set_value(table[index], value)
-    else:
-        # Inserta nueva entrada
-        entry = me.new_map_entry(key, value)
-        table[index] = entry
-        my_map["size"] += 1
-        my_map["current_factor"] = my_map["size"] / my_map["capacity"]
-
-        # Verificar si se debe hacer rehash
-        if my_map["current_factor"] >= my_map["limit_factor"]:
-            rehash(my_map)
-
-
-def contains(my_map, key):
-    """
-    Verifica si una llave existe en el mapa.
-    """
-    found, _ = find_slot(my_map, key)
-    return found
-
-
-def get(my_map, key):
-    """
-    Obtiene el valor asociado a una llave dada. Retorna None si no existe.
-    """
-    found, index = find_slot(my_map, key)
-    if found:
-        return me.get_value(my_map["table"][index])
-    return None
-
-
-def remove(my_map, key):
-    """
-    Elimina una entrada de la tabla usando lazy deletion (marcando la llave como None).
-    """
-    found, index = find_slot(my_map, key)
-    if found:
-        entry = my_map["table"][index]
-        me.set_key(entry, None)
-        me.set_value(entry, None)
-        my_map["size"] -= 1
-        my_map["current_factor"] = my_map["size"] / my_map["capacity"]
-        return entry
-    return None
-
+           
+        
 
 def size(my_map):
     """
@@ -184,11 +145,10 @@ def key_set(my_map):
     """
     # Nota: Se puede retornar como una lista de Python o usando ArrayList según prefieras
     keys = []
-    for entry in my_map["table"]:
-        if entry is not None and me.get_key(entry) is not None:
-            keys.append(me.get_key(entry))
+    for i in range(0,my_map["table"]["size"]):
+        if me.get_key(my_map["table"]["elements"][i]) != None:
+            keys.append(me.get_key(my_map["table"]["elements"][i]))
     return keys
-
 
 def value_set(my_map):
     """
@@ -199,3 +159,4 @@ def value_set(my_map):
         if entry is not None and me.get_key(entry) is not None:
             values.append(me.get_value(entry))
     return values
+
