@@ -14,23 +14,23 @@ Este repositorio forma parte del marco docente de estructura de datos y algoritm
 
 **Tabla de contenido (actualizada)**
 
-1. [Laboratorio 6](#laboratorio-6)
-   1. [Miembros](#Miembros)
-   2. [Acerca del proyecto](#Acerca-del-proyecto)
-      1. [Estructura](#Estructura)
-   3. [Uso](#Uso)
-   4. [Contacto y Soporte](#Contacto-y-Soporte)
-   5. [Contribuir](#Contribuir)
-   6. [Licencia](#Licencia)
-   7. [Autores y Reconocimiento](#Autores-y-Reconocimiento)
+- [Laboratorio 6](#laboratorio-6)
+  - [Miembros](#miembros)
+  - [Acerca del proyecto](#acerca-del-proyecto)
+    - [Estructura](#estructura)
+  - [Uso](#uso)
+  - [Contacto y Soporte](#contacto-y-soporte)
+  - [Contribuir](#contribuir)
+  - [Licencia](#licencia)
+  - [Autores y Reconocimiento](#autores-y-reconocimiento)
 
 ## Miembros
 
 Los estudiantes editan esta sección para agregar sus nombres, correos electrónicos de Uniandes y especificar qué funcionalidad de proyecto implementarán.
 
-1. Nombre del estudiante No. 1, Correo electrónico del estudiante No. 1 Uniandes, Funcionalidad propiedad del estudiante No. 1.
-1. Nombre del estudiante No. 2, Correo electrónico del estudiante No. 2 Uniandes, Funcionalidad propiedad del estudiante No. 2.
-1. Nombre del estudiante No. 3, Correo electrónico del estudiante No. 3 Uniandes, Funcionalidad propiedad del estudiante No. 3.
+1. Alvaro Andres Villate Leon No. 1, correo electrónico del estudiantea.villatel@uniandes.edu.co No 202616607. 1 Uniandes, Funcionalidad propiedad del estudiante No. 1.
+2. Nombre del estudiante No. 2, Correo electrónico del estudiante No. 2 Uniandes, Funcionalidad propiedad del estudiante No. 2.
+3. Nombre del estudiante No. 3, Correo electrónico del estudiante No. 3 Uniandes, Funcionalidad propiedad del estudiante No. 3.
 
 [Volver al inicio](#laboratorio-6)
 
