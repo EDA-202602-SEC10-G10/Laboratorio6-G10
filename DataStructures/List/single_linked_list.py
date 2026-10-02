@@ -93,6 +93,9 @@ def remove_first(my_list):
         my_list["size"] = my_list["size"] -1
         return eliminado
 
+def remove_element(my_list, index):
+    return delete_element(my_list, index)
+
 
 def remove_last(my_list):
     if my_list["size"] == 0:

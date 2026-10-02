@@ -1,149 +1,127 @@
-import random
-from DataStructures.Map import map_entry as me
-from DataStructures.Map import map_functions as mf
-from DataStructures.List import list_node as ln
-from DataStructures.List import single_linked_list as sll
-from DataStructures.List import array_list as al
+import random as rd
+import DataStructures.Map.map_functions as mf
+import DataStructures.Map.map_entry as me
+import DataStructures.List.single_linked_list as sl
+import DataStructures.List.array_list as al
 
-def new_map(num,load_factor,prime):
-    capacity = mf.next_prime(int(num/load_factor))
-    scale = rd.randint(1,prime-1)
-    shift = rd.randint(0,prime-1)
-    my_map = {"prime":prime,"scale":scale,"shift":shift,"capacity":capacity,"table":al.new_list(),"current_factor":0,"limit_factor":0,"size":0}
-    for i in range(0,capacity):
-        lista = sll.new_list()
-        al.add_last(my_map["table"]["elements"],lista)
-    return  my_map
-
-def default_compare(key,entry):
-    if key == me.get_key(entry):
-        return 0 
-    if key > me.get_key(entry):
-        return 1
-    return -1
-
-def contains(my_map,key):
-    hash_value = mf.hash_value(my_map,key)
-    grupo = my_map["table"]["elements"][hash_value]
-    t = grupo["size"]
-    i = 0
-    actual = grupo["first"]
-    existe = False
-    while i < t:
-        if actual["info"]["key"] == key:
-            existe = True
-            break
-        i += 1
-        actual = actual["next"]
-    return existe
-
-def remove(my_map, key):
-    hash_value = mf.hash_value(my_map, key)
-    ubicacion = my_map["table"]["elements"][hash_value]
+def new_map(num, load_factor, prime):
+    capacity = mf.next_prime(int(num / load_factor))
+    scale = rd.randint(1, prime - 1)
+    shift = rd.randint(0, prime - 1)
     
-    # ERRATA 1: t1 debe medir la sublista 'ubicacion', no el arreglo de la tabla
-    t1 = sll.size(ubicacion) 
-    
-    # ERRATA 2: Verificar que no esté vacía la lista antes de pedir actual["next"]
-    if ubicacion["first"] is None:
-        return my_map
+    table = al.new_list()
+    for _ in range(capacity):
+        al.add_last(table, sl.new_list())
         
-    i = 0
-    actual = ubicacion["first"]
-    siguiente = actual["next"]
-    
-    if contains(my_map, key):
-        # ERRATA 3: 't' era una variable no definida; usamos t1
-        if t1 <= 2 and t1 != 0:
-            if t1 <= 1:
-                # ERRATA 4: Limpiar la lista en memoria en lugar de crear un diccionario nuevo
-                ubicacion["first"] = None
-                ubicacion["last"] = None
-                ubicacion["size"] = 0
-                return my_map
-            else:
-                if actual["info"]["key"] == key:
-                    # ERRATA 5: Asignar el nodo 'siguiente', no 'siguiente["info"]'
-                    ubicacion["first"] = siguiente
-                    ubicacion["last"] = siguiente
-                    ubicacion["size"] = 1
-                    return my_map
-                else:
-                    # ERRATA 6: Corregir sintaxis size=1 -> "size": 1 y asignar el nodo 'actual'
-                    actual["next"] = None
-                    ubicacion["first"] = actual
-                    ubicacion["last"] = actual
-                    ubicacion["size"] = 1
-                    return my_map
-        
-        if actual["info"]["key"] != key:
-            while i < t1 - 2:
-                if siguiente["info"]["key"] == key:
-                    actual["next"] = siguiente["next"]
-                    return my_map
-                i += 1
-                actual = actual["next"]
-                # ERRATA 7: Avanzar también el puntero 'siguiente' en cada paso del loop
-                siguiente = actual["next"]
-                
-            # ERRATA 8: Sangría fuera del while para no cortar la primera iteración
-            actual["next"] = None
-            return my_map
-        else:
-            ubicacion["first"] = siguiente
-            return my_map
-    
+    my_map = {
+        "capacity": capacity,
+        "current_factor": 0.0,
+        "limit_factor": load_factor,
+        "prime": prime,
+        "scale": scale,
+        "shift": shift,
+        "size": 0,
+        "table": table
+    }
     return my_map
-           
-          
+
 def put(my_map, key, value):
-    hash_value = mf.hash_value(my_map, key)
-    grupo = my_map["table"]["elements"][hash_value]
+    hash_val = mf.hash_value(my_map, key)
+    chain = al.get_element(my_map["table"], hash_val)
     
-    # 1. Si la llave ya existe, actualizamos su valor
-    actual = grupo["first"]
-    while actual is not None:
-        if actual["info"]["key"] == key:
-            actual["info"]["value"] = value
+    # Buscar si la llave ya existe para actualizarla
+    current_node = chain["first"]
+    while current_node is not None:
+        entry = current_node["info"]
+        if me.get_key(entry) == key:
+            me.set_value(entry, value)
             return my_map
-        actual = actual["next"]
+        current_node = current_node["next"]
         
-    # 2. Si no existe, creamos el map_entry y lo insertamos al inicio de la sublista
-    entry = me.new_map_entry(key, value)
-    sll.add_first(grupo, entry)  # O insertas creando el nodo directamente
-    
-    # 3. Actualizamos contadores
+    # Si no existe, insertar nueva entrada al inicio de la lista encadenada
+    new_entry = me.new_map_entry(key, value)
+    sl.add_first(chain, new_entry)
     my_map["size"] += 1
     my_map["current_factor"] = my_map["size"] / my_map["capacity"]
     
-    # 4. Verificamos si se debe hacer rehash
     if my_map["current_factor"] > my_map["limit_factor"]:
         rehash(my_map)
         
-    return my_map    
-
-
-def rehash(my_map):
-    viejos_elementos = my_map["table"]["elements"]
-    nueva_capacidad = my_map["capacity"] * 2
-    
-    # Reconfiguramos el mapa con la nueva tabla vacía
-    my_map["capacity"] = nueva_capacidad
-    my_map["table"] = al.new_list(nueva_capacidad)
-    for _ in range(nueva_capacidad):
-        al.add_last(my_map["table"], sll.new_list())
-        
-    my_map["size"] = 0
-    
-    # Reinsertamos los elementos que teníamos guardados
-    for i in range(len(viejos_elementos)):
-        sublista = viejos_elementos[i]
-        actual = sublista["first"]
-        while actual is not None:
-            put(my_map, actual["info"]["key"], actual["info"]["value"])
-            actual = actual["next"]
-            
     return my_map
+
+def contains(my_map, key):
+    return get(my_map, key) is not None
+
+def get(my_map, key):
+    hash_val = mf.hash_value(my_map, key)
+    chain = al.get_element(my_map["table"], hash_val)
+    
+    current_node = chain["first"]
+    while current_node is not None:
+        entry = current_node["info"]
+        if me.get_key(entry) == key:
+            return me.get_value(entry)
+        current_node = current_node["next"]
+    return None
+
+# def remove(my_map, key):
+    hash_value = mf.hash_value(my_map,key)
+    tamaño = my_map["table"]["elements"][hash_value]["size"]
+    i = 0
+    actual = my_map["table"]["elements"][hash_value]["first"] 
+    if tamaño == 1:
+       my_map["table"]["elements"][hash_value] = sl.new_list()
+       return my_map
+    
+    while i < tamaño-1:
+        if actual["info"]["key"] == key:
+           sl.delete_element(my_map["table"]["elements"][hash_value],i)
+           break
+        i += 1
+        actual = actual["next"]
+        
+    return my_map
+
+def remove(my_map, key):
+    hash_val = mf.hash_value(my_map, key)
+    chain = al.get_element(my_map["table"], hash_val)
+    
+    current_node = chain["first"]
+    index = 0
+    
+    while current_node is not None:
+        entry = current_node["info"]
+        
+        if me.get_key(entry) == key:
+            # Eliminar elemento de la lista enlazada
+            removed = sl.delete_element(chain, index)
+            
+            # Desempaquetar en caso de que 'delete_element' devuelva un nodo o envoltorio
+            if isinstance(removed, dict):
+                if "info" in removed:
+                    removed_entry = removed["info"]
+                else:
+                    removed_entry = removed
+            else:
+                removed_entry = removed
+            
+            # Si el result aún no tiene la llave 'value', extraer la entry del nodo buscado directamente
+            if isinstance(removed_entry, dict) and "value" not in removed_entry:
+                val = me.get_value(entry)
+            else:
+                val = me.get_value(removed_entry)
+            
+            # Actualizar tamaño y factor de carga del mapa
+            my_map["size"] -= 1
+            my_map["current_factor"] = my_map["size"] / my_map["capacity"]
+            
+            return val
+            
+        current_node = current_node["next"]
+        index += 1
+        
+    return None
+         
 
 def size(my_map):
     return my_map["size"]
@@ -152,21 +130,47 @@ def is_empty(my_map):
     return my_map["size"] == 0
 
 def key_set(my_map):
-    keys = sll.new_list()
-    elementos = my_map["table"]["elements"]
-    for i in range(my_map["capacity"]):
-        actual = elementos[i]["first"]
-        while actual is not None:
-            sll.add_last(keys, actual["info"]["key"])
-            actual = actual["next"]
+    keys = al.new_list()
+    for i in range(al.size(my_map["table"])):
+        chain = al.get_element(my_map["table"], i)
+        current_node = chain["first"]
+        while current_node is not None:
+            entry = current_node["info"]
+            al.add_last(keys, me.get_key(entry))
+            current_node = current_node["next"]
     return keys
 
 def value_set(my_map):
-    values = sll.new_list()
-    elementos = my_map["table"]["elements"]
-    for i in range(my_map["capacity"]):
-        actual = elementos[i]["first"]
-        while actual is not None:
-            sll.add_last(values, actual["info"]["value"])
-            actual = actual["next"]
+    values = al.new_list()
+    for i in range(al.size(my_map["table"])):
+        chain = al.get_element(my_map["table"], i)
+        current_node = chain["first"]
+        while current_node is not None:
+            entry = current_node["info"]
+            al.add_last(values, me.get_value(entry))
+            current_node = current_node["next"]
     return values
+
+def rehash(my_map):
+    old_table = my_map["table"]
+    old_capacity = my_map["capacity"]
+    
+    new_capacity = mf.next_prime(old_capacity * 2)
+    new_table = al.new_list()
+    for _ in range(new_capacity):
+        al.add_last(new_table, sl.new_list())
+        
+    my_map["capacity"] = new_capacity
+    my_map["table"] = new_table
+    my_map["size"] = 0
+    my_map["current_factor"] = 0.0
+    
+    for i in range(al.size(old_table)):
+        chain = al.get_element(old_table, i)
+        current_node = chain["first"]
+        while current_node is not None:
+            entry = current_node["info"]
+            put(my_map, me.get_key(entry), me.get_value(entry))
+            current_node = current_node["next"]
+            
+    return my_map
